@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     refresh_token_days: int = 7
     cors_origins: str = "http://localhost:5173,https://astro-frontend-six-mauve.vercel.app"
     openai_api_key: str | None = None
-    tts_model: str = "gpt-4o-mini-tts"
     geocoder_user_agent: str = "AstrologyConsultationPlatform/1.0"
     admin_email: str | None = None
     admin_password: str | None = None
@@ -18,6 +17,7 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-3.1-flash-lite"
     gemini_question_model: str = "gemini-3.5-flash-lite"
+    gemini_tts_model: str = "gemini-3.8-flash-lite-tts"
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
     @property
     def allowed_origins(self) -> list[str]:

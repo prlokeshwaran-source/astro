@@ -43,7 +43,7 @@ All HTTP endpoints below are prefixed with `/api/v1`. Authentication uses a bear
 
 Chat attachment requests are limited to 8 MiB. The message history omits base64 payloads; attachment bytes are retrieved from the protected attachment endpoint.
 
-`POST /voice/astrology-answer` accepts `question`, `chart` (birth date/time with timezone, latitude, longitude, and optional house system), and optional `language` (`en`, `ta`, or `hi`) and `voice`. If `language` is omitted, the caller's saved language preference is used. The response contains the localized text answer and `audio_mpeg_base64`. The endpoint is documented in Swagger at `/docs`.
+`POST /voice/astrology-answer` accepts `question`, `chart` (birth date/time with timezone, latitude, longitude, and optional house system), and optional `language` (`en`, `ta`, or `hi`) and Gemini `voice`. If `language` is omitted, the caller's saved language preference is used. The response contains the localized text answer and `audio_wav_base64`. Both voice endpoints use Gemini TTS and return WAV audio; configure `GEMINI_API_KEY` and optionally `GEMINI_TTS_MODEL`. The endpoint is documented in Swagger at `/docs`.
 
 ## Reports, reviews, and support
 

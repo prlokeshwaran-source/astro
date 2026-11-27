@@ -16,9 +16,9 @@ Settings are loaded from environment variables and `.env` using Pydantic Setting
 | `GEMINI_API_KEY` | For Gemini | Google AI Studio key |
 | `GEMINI_MODEL` | No | Gemini model name |
 | `GEMINI_QUESTION_MODEL` | No | Fast Gemini model used for spoken astrology answers; defaults to `gemini-3.5-flash-lite` |
-| `OPENAI_API_KEY` | For OpenAI | OpenAI API key |
+| `GEMINI_TTS_MODEL` | No | Gemini speech model; defaults to `gemini-3.8-flash-lite-tts` |
+| `OPENAI_API_KEY` | Optional | OpenAI report generation when `AI_PROVIDER=openai`; voice TTS uses Gemini |
 | `REPORT_AI_MODEL` | No | OpenAI report model |
-| `TTS_MODEL` | No | Text-to-speech model |
 | `GEOCODER_USER_AGENT` | No | User agent for geocoding requests |
 
 ## Example development setup
