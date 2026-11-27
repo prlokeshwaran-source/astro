@@ -308,3 +308,55 @@ async def _generate_with_gemini(prompt: str) -> str:
     except httpx.RequestError as exc:
         logger.warning("Could not connect to Gemini while generating a report")
         raise HTTPException(502, "Could not connect to Gemini. Check the backend network connection.") from exc
+
+
+async def answer_astrology_question(chart: dict, question: str, language: str = "en") -> str:
+    """Draft a concise, chart-aware answer to a user's astrology question."""
+    chart_data = {
+        "lagna": chart.get("lagna"),
+        "moon_sign": chart.get("rasi"),
+        "nakshatra": chart.get("nakshatra"),
+        "planets": [
+            {key: planet.get(key) for key in ("name", "rasi", "longitude", "navamsa")}
+            for planet in chart.get("planets", [])
+        ],
+        "current_dasha": next((
+            {"mahadasha": major.get("lord"), "bhukti": period.get("lord")}
+            for major in (chart.get("dasha") or {}).get("mahadashas", [])
+            for period in major.get("bhuktis", []) if period.get("is_current")
+        ), None),
+    }
+    language_name = {"en": "English", "ta": "Tamil", "hi": "Hindi"}.get(language, "English")
+    prompt = (
+        "Answer the user's astrology question using only the supplied Vedic chart data. "
+        "Keep the answer warm, direct, and suitable to be read aloud in about 3 to 5 sentences. "
+        "Frame astrology as a traditional interpretive practice, not certainty. Do not give medical, legal, "
+        "or guaranteed financial advice. Do not invent chart placements or dates. "
+        f"Write the complete answer in {language_name}.\n\n"
+        f"Question: {question}\nChart data: {json.dumps(chart_data, ensure_ascii=True)}"
+    )
+    provider = settings.ai_provider.strip().lower()
+    if provider == "gemini":
+        return (await _generate_with_gemini(prompt))[:2500]
+    if provider != "openai":
+        raise HTTPException(503, "Unsupported AI_PROVIDER. Choose gemini or openai.")
+    if not settings.openai_api_key:
+        raise HTTPException(503, "OpenAI question answering is not configured. Set OPENAI_API_KEY in the backend .env.")
+    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    try:
+        response = await client.responses.create(
+            model=settings.report_ai_model,
+            instructions="Answer astrology questions carefully and concisely for a client.",
+            input=prompt,
+        )
+        answer = response.output_text.strip()
+        if not answer:
+            raise HTTPException(502, "AI question answering returned no content.")
+        return answer[:2500]
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Astrology question answering failed")
+        raise HTTPException(502, "Could not generate an astrology answer.") from exc
+    finally:
+        await client.close()

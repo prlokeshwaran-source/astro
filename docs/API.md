@@ -39,8 +39,11 @@ All HTTP endpoints below are prefixed with `/api/v1`. Authentication uses a bear
 | POST/GET | `/payments` and `/payments/mine` | User / admin | Create or list payment records |
 | PATCH | `/payments/{payment_id}/status` | Admin | Update payment status |
 | POST | `/voice/text-to-speech` | Authenticated | Generate speech audio for supplied text |
+| POST | `/voice/astrology-answer` | Authenticated | Generate a chart-based answer in the selected language and return its MP3 audio as base64 |
 
 Chat attachment requests are limited to 8 MiB. The message history omits base64 payloads; attachment bytes are retrieved from the protected attachment endpoint.
+
+`POST /voice/astrology-answer` accepts `question`, `chart` (birth date/time with timezone, latitude, longitude, and optional house system), and optional `language` (`en`, `ta`, or `hi`) and `voice`. If `language` is omitted, the caller's saved language preference is used. The response contains the localized text answer and `audio_mpeg_base64`. The endpoint is documented in Swagger at `/docs`.
 
 ## Reports, reviews, and support
 
