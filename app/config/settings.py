@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 30
     refresh_token_days: int = 7
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,https://astro-frontend-six-mauve.vercel.app"
     openai_api_key: str | None = None
     tts_model: str = "gpt-4o-mini-tts"
     geocoder_user_agent: str = "AstrologyConsultationPlatform/1.0"
