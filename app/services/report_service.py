@@ -48,10 +48,12 @@ def render_report_pdf(title: str, sections: dict, language: str = "en") -> bytes
     page_number = 1
     left = 48
     content_width = width - (left * 2)
-    y = height - 70
+    y = height - 86
 
     def draw_brand():
         pdf.saveState()
+        pdf.setFillColor(HexColor("#431407"))
+        pdf.rect(0, height - 132, width, 132, fill=1, stroke=0)
         pdf.setStrokeColor(HexColor("#F4C542"))
         pdf.setLineWidth(1.5)
         pdf.circle(left + 13, height - 39, 12, stroke=1, fill=0)
@@ -69,7 +71,7 @@ def render_report_pdf(title: str, sections: dict, language: str = "en") -> bytes
             path.lineTo(*point)
         path.close()
         pdf.drawPath(path, stroke=1, fill=1)
-        pdf.setFillColor(HexColor("#431407"))
+        pdf.setFillColor(HexColor("#FFF7ED"))
         pdf.setFont(bold_name, 12)
         pdf.drawString(left + 34, height - 43, "Astra", shaping=font_name != "Helvetica")
         pdf.restoreState()
@@ -87,10 +89,16 @@ def render_report_pdf(title: str, sections: dict, language: str = "en") -> bytes
     draw_brand()
     pdf.setTitle(title[:200])
     pdf.setAuthor("Astra")
-    pdf.setFillColor(HexColor("#431407"))
+    pdf.setFillColor(HexColor("#F4C542"))
+    pdf.setFont(bold_name, 8)
+    pdf.drawString(left, height - 69, "ASTRA  ·  PERSONAL INSIGHT")
+    pdf.setFillColor(HexColor("#FFF7ED"))
     pdf.setFont(bold_name, 18)
-    pdf.drawString(left, y - 20, _pdf_text(title, bold_name)[:160], shaping=bold_name != "Helvetica-Bold")
-    y -= 38
+    title_lines = wrap(title, width=66)[:2] or [title]
+    for title_line in title_lines:
+        pdf.drawString(left, y, _pdf_text(title_line, bold_name), shaping=bold_name != "Helvetica-Bold")
+        y -= 22
+    y = height - 146
     pdf.setStrokeColor(HexColor("#F97316"))
     pdf.setLineWidth(2)
     pdf.line(left, y, left + 54, y)
@@ -103,7 +111,7 @@ def render_report_pdf(title: str, sections: dict, language: str = "en") -> bytes
             draw_footer()
             pdf.showPage()
             page_number += 1
-            y = height - 58
+            y = height - 158
             draw_brand()
         heading_height = max(22, len(heading_lines) * 12 + 10)
         pdf.setFillColor(HexColor("#FFF7ED"))
@@ -123,7 +131,7 @@ def render_report_pdf(title: str, sections: dict, language: str = "en") -> bytes
                     draw_footer()
                     pdf.showPage()
                     page_number += 1
-                    y = height - 58
+                    y = height - 158
                     draw_brand()
                     pdf.setFillColor(HexColor("#431407"))
                     pdf.setFont(font_name, 9.5)

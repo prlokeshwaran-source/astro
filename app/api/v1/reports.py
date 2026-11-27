@@ -38,6 +38,52 @@ def _report_document(report: dict) -> dict:
     return result
 
 
+def _pdf_sections(report: dict, client_name: str | None) -> dict:
+    content = report.get("content") or {}
+    language = report.get("language", "en")
+    labels = {
+        "en": ["Client", "Topic", "Birth chart", "Planet placements", "Vimshottari Dasha and Bhukti timeline", "Astrology prediction", "Astrologer notes"],
+        "ta": ["வாடிக்கையாளர்", "தலைப்பு", "ஜாதகக் கட்டம்", "கிரக நிலைகள்", "விம்சோத்தரி தசை மற்றும் புத்தி கால அட்டவணை", "ஜோதிடக் கணிப்பு", "ஜோதிடர் குறிப்புகள்"],
+        "hi": ["ग्राहक", "विषय", "जन्म कुंडली", "ग्रह स्थिति", "विंशोत्तरी महादशा और भुक्ति समयरेखा", "ज्योतिषीय भविष्यवाणी", "ज्योतिषी के नोट्स"],
+    }.get(language, ["Client", "Topic", "Birth chart", "Planet placements", "Vimshottari Dasha and Bhukti timeline", "Astrology prediction", "Astrologer notes"])
+    sections = {labels[0]: client_name or "Client"}
+    if report.get("topic"):
+        sections[labels[1]] = report["topic"]
+    chart = content.get("chart") if isinstance(content, dict) else None
+    if isinstance(chart, dict):
+        chart_summary = "; ".join(filter(None, [
+            f"Lagna: {chart.get('lagna_display') or chart.get('lagna')}" if chart.get("lagna_display") or chart.get("lagna") else "",
+            f"Moon sign: {chart.get('rasi_display') or chart.get('rasi')}" if chart.get("rasi_display") or chart.get("rasi") else "",
+            f"Nakshatra: {chart.get('nakshatra_display') or chart.get('nakshatra')}" if chart.get("nakshatra_display") or chart.get("nakshatra") else "",
+        ]))
+        if chart_summary:
+            sections[labels[2]] = chart_summary
+        planets = chart.get("planets") or []
+        if planets:
+            sections[labels[3]] = "\n".join(
+                f"{planet.get('name_display') or planet.get('name', '')}: "
+                f"{planet.get('rasi_display') or planet.get('rasi', '')}"
+                for planet in planets
+            )
+        dasha_rows = []
+        for major in (chart.get("dasha") or {}).get("mahadashas", []):
+            for subperiod in major.get("bhuktis", []):
+                dasha_rows.append(
+                    f"{major.get('lord_display') or major.get('lord', '')} / "
+                    f"{subperiod.get('lord_display') or subperiod.get('lord', '')}: "
+                    f"{subperiod.get('start_at', '')[:10]} to {subperiod.get('end_at', '')[:10]}"
+                )
+        if dasha_rows:
+            sections[labels[4]] = "\n".join(dasha_rows)
+    if isinstance(content, dict) and content.get("summary"):
+        sections[labels[5]] = content["summary"]
+    if isinstance(content, dict) and content.get("astrologer_notes"):
+        sections[labels[6]] = content["astrologer_notes"]
+    if len(sections) == 1 and isinstance(content, dict):
+        sections.update({str(key): value for key, value in content.items() if isinstance(value, (str, int, float))})
+    return sections
+
+
 @router.post("", status_code=201)
 async def create(body: ReportBody, user: dict = Depends(current_user)):
     consultation = await database.consultations.find_one({"_id": body.consultation_id})
@@ -202,11 +248,17 @@ async def download_pdf(report_id: str, user: dict = Depends(current_user)):
         allowed = user["role"] == "ADMIN"
     if not allowed:
         raise HTTPException(403, "You cannot access this report")
-    pdf_data = report.get("pdf_data")
-    if not pdf_data:
-        raise HTTPException(404, "PDF is not available for this report")
+    client = await database.users.find_one({"_id": report.get("user_id")})
+    pdf_data = render_report_pdf(
+        report.get("title") or "Astrology consultation report",
+        _pdf_sections(report, (client or {}).get("name")),
+        report.get("language", "en"),
+    )
     return Response(
         content=bytes(pdf_data),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="astrology-report-{report_id}.pdf"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="astrology-report-{report_id}.pdf"',
+            "Cache-Control": "no-store",
+        },
     )
