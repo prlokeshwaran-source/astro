@@ -1,0 +1,751 @@
+{
+  "info": {
+    "name": "Astrology Consultation API",
+    "description": "API smoke testing collection. Register and log in first. Set role and record ID variables as needed. Admin and approved astrologer endpoints require corresponding accounts/documents.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "email",
+      "value": "api.test@example.com"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    },
+    {
+      "key": "astrologer_id",
+      "value": ""
+    },
+    {
+      "key": "consultation_id",
+      "value": ""
+    },
+    {
+      "key": "call_id",
+      "value": ""
+    },
+    {
+      "key": "payment_id",
+      "value": ""
+    },
+    {
+      "key": "complaint_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"API Test User\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"9876543210\",\n  \"password\": \"StrongPass123\",\n  \"preferred_language\": \"ta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"StrongPass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access_token) pm.collectionVariables.set('access_token', data.access_token);",
+                  "if (data.refresh_token) pm.collectionVariables.set('refresh_token', data.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access_token) pm.collectionVariables.set('access_token', data.access_token);",
+                  "if (data.refresh_token) pm.collectionVariables.set('refresh_token', data.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /users/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/users/me"
+          }
+        },
+        {
+          "name": "PATCH /users/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/users/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated API User\",\n  \"mobile\": \"9876543211\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /users/{{user_id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/users/{{user_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Astrologers",
+      "item": [
+        {
+          "name": "POST /astrologers/apply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/astrologers/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Astrologer\",\n  \"experience\": 5,\n  \"specialization\": [\n    \"Career\"\n  ],\n  \"languages\": [\n    \"English\"\n  ],\n  \"consultation_price\": 500,\n  \"bio\": \"Experienced astrologer available for career consultations.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /astrologers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/astrologers?specialization=Career&language=English&page=1&page_size=20"
+          }
+        },
+        {
+          "name": "GET /astrologers/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/astrologers/me"
+          }
+        },
+        {
+          "name": "PATCH /astrologers/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/astrologers/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Updated astrologer profile description.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Astrology",
+      "item": [
+        {
+          "name": "POST /astrology/chart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/astrology/chart",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"birth_datetime\": \"2003-09-07T19:07:00+05:30\",\n  \"latitude\": 11.94,\n  \"longitude\": 79.83,\n  \"house_system\": \"P\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultations",
+      "item": [
+        {
+          "name": "POST /consultations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/consultations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"astrologer_id\": \"{{astrologer_id}}\",\n  \"consultation_type\": \"CHAT\",\n  \"scheduled_at\": \"2030-01-01T10:00:00+05:30\",\n  \"duration_minutes\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /consultations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/consultations?page=1&page_size=20"
+          }
+        },
+        {
+          "name": "PATCH /consultations/{{consultation_id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/consultations/{{consultation_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "POST /chat/{{consultation_id}}/messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/chat/{{consultation_id}}/messages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello, this is an API test message.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /chat/{{consultation_id}}/messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/chat/{{consultation_id}}/messages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calls",
+      "item": [
+        {
+          "name": "POST /calls/start",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/calls/start",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultation_id\": \"{{consultation_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /calls/{{call_id}}/end",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/calls/{{call_id}}/end",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /payments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/payments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultation_id\": \"{{consultation_id}}\",\n  \"provider\": \"test\",\n  \"provider_reference\": \"test-payment-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /payments/mine",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/payments/mine"
+          }
+        },
+        {
+          "name": "PATCH /payments/{{payment_id}}/status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{base_url}}/api/v1/payments/{{payment_id}}/status?status=SUCCEEDED"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "POST /reports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/reports",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultation_id\": \"{{consultation_id}}\",\n  \"title\": \"Consultation Report\",\n  \"content\": {\n    \"summary\": \"Sample report\",\n    \"recommendations\": [\n      \"Review the chart\"\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/reports"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "POST /reviews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultation_id\": \"{{consultation_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Sample review\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /reviews/{{astrologer_id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/reviews/{{astrologer_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Complaints",
+      "item": [
+        {
+          "name": "POST /complaints",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/complaints",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"API test complaint\",\n  \"description\": \"This is a test complaint with enough detail.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /complaints",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/complaints"
+          }
+        },
+        {
+          "name": "PATCH /complaints/{{complaint_id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{base_url}}/api/v1/complaints/{{complaint_id}}?status=RESOLVED&notes=Reviewed"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /admin/dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/admin/dashboard"
+          }
+        },
+        {
+          "name": "GET /admin/astrologers/pending",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/admin/astrologers/pending"
+          }
+        },
+        {
+          "name": "PATCH /admin/astrologers/{{astrologer_id}}/approval",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{base_url}}/api/v1/admin/astrologers/{{astrologer_id}}/approval?status=APPROVED"
+          }
+        },
+        {
+          "name": "GET /admin/users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/admin/users"
+          }
+        },
+        {
+          "name": "PATCH /admin/users/{{user_id}}/active",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{base_url}}/api/v1/admin/users/{{user_id}}/active?enabled=true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voice TTS",
+      "item": [
+        {
+          "name": "POST /voice/text-to-speech",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Your astrology prediction text goes here.\",\n  \"voice\": \"alloy\",\n  \"instructions\": \"Speak clearly and warmly.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/v1/voice/text-to-speech"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Languages",
+      "item": [
+        {
+          "name": "GET /languages",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/languages"
+          }
+        },
+        {
+          "name": "PUT /users/me/language",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferred_language\": \"ta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/api/v1/users/me/language"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Locations",
+      "item": [
+        {
+          "name": "GET /locations/search",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/locations/search?q=Puducherry&language=ta"
+          }
+        }
+      ]
+    }
+  ]
+}
