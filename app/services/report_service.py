@@ -258,40 +258,48 @@ async def generate_astrology_prediction(chart: dict, topic: str, astrologer_note
     finally:
         await client.close()
 
-async def _generate_with_gemini(prompt: str) -> str:
+async def _generate_with_gemini(
+    prompt: str,
+    *,
+    model_name: str | None = None,
+    system_instruction: str = "You assist a practicing astrologer by drafting a careful, readable interpretation for their review.",
+    max_output_tokens: int = 900,
+    timeout_seconds: float = 35,
+    retry_overloaded: bool = True,
+) -> str:
     if not settings.gemini_api_key:
-        raise HTTPException(503, "Gemini reports are not configured. Set GEMINI_API_KEY in the backend .env.")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
+        raise HTTPException(503, "Gemini is not configured. Set GEMINI_API_KEY in the backend .env.")
+    model = model_name or settings.gemini_model
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     payload = {
-        "systemInstruction": {"parts": [{
-            "text": "You assist a practicing astrologer by drafting a careful, readable interpretation for their review."
-        }]},
+        "systemInstruction": {"parts": [{"text": system_instruction}]},
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 900},
+        "generationConfig": {"temperature": 0.4, "maxOutputTokens": max_output_tokens},
     }
     try:
-        timeout = httpx.Timeout(35, connect=8)
+        timeout = httpx.Timeout(timeout_seconds, connect=min(8, timeout_seconds))
         async with httpx.AsyncClient(timeout=timeout, verify=ssl.create_default_context()) as client:
             response = None
-            for attempt in range(2):
+            attempts = 2 if retry_overloaded else 1
+            for attempt in range(attempts):
                 response = await client.post(
                     url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload
                 )
-                if response.status_code != 503 or attempt == 1:
+                if response.status_code != 503 or attempt + 1 == attempts:
                     break
                 await asyncio.sleep(0.75)
         if response.is_error:
-            logger.warning("Gemini report generation returned HTTP %s", response.status_code)
+            logger.warning("Gemini request returned HTTP %s", response.status_code)
             if response.status_code in {401, 403}:
                 detail = "Gemini rejected the key or project. Check GEMINI_API_KEY and Google AI Studio access."
             elif response.status_code == 404:
-                detail = "Gemini model unavailable. Check GEMINI_MODEL in the backend .env."
+                detail = "Gemini model unavailable. Check the configured Gemini model in the backend .env."
             elif response.status_code == 429:
                 detail = "Gemini quota or rate limit reached. Check the project's current API limits."
             elif response.status_code == 503:
                 detail = "Gemini is temporarily overloaded. Please try generating this report again shortly."
             else:
-                detail = f"Gemini report request failed (HTTP {response.status_code})."
+                detail = f"Gemini request failed (HTTP {response.status_code})."
             raise HTTPException(502, detail)
         data = response.json()
         candidates = data.get("candidates") or []
@@ -303,10 +311,10 @@ async def _generate_with_gemini(prompt: str) -> str:
     except HTTPException:
         raise
     except httpx.TimeoutException as exc:
-        logger.warning("Gemini report request timed out")
-        raise HTTPException(504, "Gemini took too long to respond. Try the report again.") from exc
+        logger.warning("Gemini request timed out")
+        raise HTTPException(504, "Gemini took too long to respond. Please try again.") from exc
     except httpx.RequestError as exc:
-        logger.warning("Could not connect to Gemini while generating a report")
+        logger.warning("Could not connect to Gemini")
         raise HTTPException(502, "Could not connect to Gemini. Check the backend network connection.") from exc
 
 
@@ -337,7 +345,14 @@ async def answer_astrology_question(chart: dict, question: str, language: str = 
     )
     provider = settings.ai_provider.strip().lower()
     if provider == "gemini":
-        return (await _generate_with_gemini(prompt))[:2500]
+        return (await _generate_with_gemini(
+            prompt,
+            model_name=settings.gemini_question_model,
+            system_instruction="Answer the user's astrology question directly and concisely for the user.",
+            max_output_tokens=400,
+            timeout_seconds=18,
+            retry_overloaded=False,
+        ))[:2500]
     if provider != "openai":
         raise HTTPException(503, "Unsupported AI_PROVIDER. Choose gemini or openai.")
     if not settings.openai_api_key:
