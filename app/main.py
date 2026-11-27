@@ -19,9 +19,12 @@ app = FastAPI(title="Astrology Consultation API", version="1.0.0", lifespan=life
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
+    # Vercel gives preview deployments a distinct hostname. Keep those
+    # previews scoped to this frontend's project slug.
+    allow_origin_regex=r"https://astro-frontend-six-mauve(?:-[a-z0-9-]+)?\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 register_error_handlers(app)
 app.include_router(api_router, prefix="/api/v1")
